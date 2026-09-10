@@ -1,0 +1,26 @@
+package io.motionguard.core
+
+data class MotionDebugMetrics(
+    val alternationScore: Float = 0f,
+    val kneeCycleScore: Float = 0f,
+    val ankleMovementScore: Float = 0f,
+    val periodicityScore: Float = 0f,
+    val kneeAmplitudeScore: Float = 0f,
+    val hipStabilityScore: Float = 0f,
+    val gaitScore: Float = 0f,
+    val poseQuality: Float = 0f,
+    val detectedStepCount: Int = 0,
+    val cameraView: CameraView = CameraView.UNKNOWN,
+    val trackingStatus: TrackingStatus = TrackingStatus.TRACKING_LOST,
+    val visibility: PoseVisibility = PoseVisibility(0f, 0f, 0f, 0f),
+    val bilateralConsistency: Float = 0f,
+    val cycleStability: Float = 0f,
+    val synchronousLegScore: Float = 0f,
+    val effectiveAnkleThreshold: Float = 0f,
+    val effectiveKneeAngleThresholdDegrees: Float = 0f,
+    val sensorMotionScore: Float = 0f,
+    val calibration: MotionCalibration? = null,
+    val gaitPhase: Int = 0,
+    val rawCadenceSpm: Float? = null,
+    val smoothedCadenceSpm: Int? = null,
+)
