@@ -88,6 +88,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.motionguard.core.Point2D
@@ -96,9 +97,13 @@ import io.motionguard.exercise.MovementSimilarity
 import kotlinx.coroutines.delay
 
 @Composable
-fun MotionGuardApp() {
+fun MotionGuardApp(onWorkoutScreenChanged: (Boolean) -> Unit = {}) {
     val context = LocalContext.current
     val navController = rememberNavController()
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    LaunchedEffect(currentBackStackEntry?.destination?.route) {
+        onWorkoutScreenChanged(currentBackStackEntry?.destination?.route?.startsWith("workout/") == true)
+    }
     var finalSimilarity by remember { mutableStateOf<MovementSimilarity?>(null) }
     var workoutSummary by remember { mutableStateOf<WorkoutSessionSummary?>(null) }
     var workoutLensFacing by rememberSaveable { mutableStateOf(CameraSelector.LENS_FACING_FRONT) }

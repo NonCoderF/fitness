@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "ai.formflow.fitness"
+    namespace = "com.sparkstudios.formfit"
     compileSdk {
         version = release(37) {
             minorApiLevel = 1
@@ -12,11 +12,17 @@ android {
     }
 
     defaultConfig {
-        applicationId = "ai.formflow.fitness"
+        applicationId = "com.sparkstudios.formfit"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 7
+        versionName = "1.3.3"
+
+        // ML Kit's legacy 32-bit MediaPipe binaries use 4 KB ELF alignment.
+        // Keep only ABIs whose packaged native libraries support 16 KB pages.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -29,6 +35,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -37,6 +44,13 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    packaging {
+        // Keep native libraries uncompressed so AGP can place them on 16 KiB
+        // ZIP boundaries in the bundle generated for Google Play.
+        jniLibs {
+            useLegacyPackaging = false
+        }
     }
 }
 

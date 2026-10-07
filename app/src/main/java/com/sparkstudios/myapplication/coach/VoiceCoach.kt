@@ -158,9 +158,68 @@ class VoiceCoach(
     }
 }
 
+/** Speaks the visible workout counter without coupling speech to pose detection. */
+class WorkoutCounterSpeechCoach(
+    private val speech: SpeechEngine,
+) {
+    private var lastCount = 0
+    private var released = false
+
+    fun onCounterChanged(count: Int, isStepCounter: Boolean) {
+        if (released || count <= lastCount) return
+        lastCount = count
+
+        // Steps are intentionally announced less often so treadmill speech remains usable.
+        if (isStepCounter && count % 10 != 0) return
+
+        val countText = numberWord(count)
+        if (count % 10 == 0) {
+            speech.stop()
+            speech.speak(
+                "$countText. Come on, you are doing great. Ten more.",
+                SpeechPriority.HIGH,
+            )
+        } else {
+            speech.speak(countText, SpeechPriority.LOW)
+        }
+    }
+
+    fun speakStartCue(text: String) {
+        if (!released) speech.speak(text, SpeechPriority.HIGH)
+    }
+
+    fun reset() {
+        if (!released) {
+            lastCount = 0
+            speech.stop()
+        }
+    }
+
+    fun release() {
+        if (released) return
+        released = true
+        speech.release()
+    }
+
+    private fun numberWord(value: Int): String {
+        val small = listOf(
+            "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+            "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen",
+            "Eighteen", "Nineteen",
+        )
+        if (value in small.indices) return small[value]
+        if (value < 100) {
+            val tens = listOf("", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety")
+            return tens[value / 10] + if (value % 10 == 0) "" else " ${small[value % 10]}"
+        }
+        return value.toString()
+    }
+}
+
 class AndroidSpeechEngine(context: android.content.Context) : SpeechEngine, TextToSpeech.OnInitListener {
     private val tts = TextToSpeech(context.applicationContext, this)
     private var ready = false
+    private var pendingSpeech: Pair<String, SpeechPriority>? = null
 
     override val isBusy: Boolean get() = ready && tts.isSpeaking
 
@@ -168,10 +227,17 @@ class AndroidSpeechEngine(context: android.content.Context) : SpeechEngine, Text
         if (status != TextToSpeech.SUCCESS) return
         val languageStatus = tts.setLanguage(Locale.US)
         ready = languageStatus != TextToSpeech.LANG_MISSING_DATA && languageStatus != TextToSpeech.LANG_NOT_SUPPORTED
+        pendingSpeech?.let { (text, priority) ->
+            pendingSpeech = null
+            speak(text, priority)
+        }
     }
 
     override fun speak(text: String, priority: SpeechPriority) {
-        if (!ready) return
+        if (!ready) {
+            pendingSpeech = text to priority
+            return
+        }
         val queue = if (priority == SpeechPriority.HIGH) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD
         tts.speak(text, queue, null, "motionguard-${System.nanoTime()}")
     }
@@ -182,6 +248,7 @@ class AndroidSpeechEngine(context: android.content.Context) : SpeechEngine, Text
 
     override fun release() {
         ready = false
+        pendingSpeech = null
         tts.stop()
         tts.shutdown()
     }

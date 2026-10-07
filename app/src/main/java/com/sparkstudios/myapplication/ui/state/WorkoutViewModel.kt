@@ -92,6 +92,11 @@ class WorkoutViewModel(
 
     init {
         motionGuard.start()
+        if (workoutMode is WorkoutMode.BuiltIn) {
+            startCountdown {
+                _uiState.update { it.copy(exerciseState = initialState(workoutMode.exercise)) }
+            }
+        }
     }
 
     fun onPoseFrame(frame: PoseFrame?) {
@@ -102,7 +107,13 @@ class WorkoutViewModel(
         }
 
         when (workoutMode) {
-            is WorkoutMode.BuiltIn -> processBuiltIn(frame, workoutMode.exercise)
+            is WorkoutMode.BuiltIn -> {
+                if (countdownInProgress) {
+                    _uiState.update { it.copy(poseData = frame) }
+                } else {
+                    processBuiltIn(frame, workoutMode.exercise)
+                }
+            }
             is WorkoutMode.Record -> processRecord(frame)
             is WorkoutMode.Repeat -> processRepeat(frame)
         }
@@ -325,8 +336,9 @@ class WorkoutViewModel(
     }
 
     private fun startCountdown(onGo: () -> Unit) {
+        if (countdownInProgress) return
+        countdownInProgress = true
         viewModelScope.launch {
-            countdownInProgress = true
             listOf("3", "2", "1", "GO").forEach { value ->
                 _uiState.update { it.copy(countdownText = value) }
                 delay(if (value == "GO") 550L else 1_000L)

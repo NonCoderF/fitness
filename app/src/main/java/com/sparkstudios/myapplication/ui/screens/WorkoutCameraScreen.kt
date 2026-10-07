@@ -94,6 +94,8 @@ import androidx.navigation.navArgument
 import io.motionguard.core.Point2D
 import io.motionguard.core.PoseFrame
 import io.motionguard.exercise.MovementSimilarity
+import com.sparkstudios.myapplication.coach.AndroidSpeechEngine
+import com.sparkstudios.myapplication.coach.WorkoutCounterSpeechCoach
 import kotlinx.coroutines.delay
 
 @Composable
@@ -113,7 +115,33 @@ fun WorkoutCameraScreen(
     ),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val speechCoach = remember {
+        WorkoutCounterSpeechCoach(AndroidSpeechEngine(context))
+    }
     KeepScreenAwake(LocalView.current.context)
+
+    DisposableEffect(Unit) {
+        onDispose { speechCoach.release() }
+    }
+
+    LaunchedEffect(uiState.repCount, uiState.exerciseType, uiState.displayMode) {
+        if (uiState.displayMode == WorkoutDisplayMode.BUILT_IN) {
+            speechCoach.onCounterChanged(
+                count = uiState.repCount,
+                isStepCounter = uiState.exerciseType == ExerciseType.TREADMILL_RUNNING,
+            )
+        }
+    }
+
+    LaunchedEffect(uiState.countdownText, uiState.displayMode) {
+        if (uiState.displayMode != WorkoutDisplayMode.BUILT_IN) return@LaunchedEffect
+        val countdown = uiState.countdownText
+        when (countdown) {
+            "3", "2", "1" -> speechCoach.speakStartCue(countdown)
+            "GO" -> speechCoach.speakStartCue("Let's roll")
+        }
+    }
 
     val exitWorkout = {
         val summary = viewModel.buildBuiltInSummary()

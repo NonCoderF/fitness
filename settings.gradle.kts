@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MotionGuard"
+rootProject.name = "FormFit"
 include(":app")
 include(":motionguard-sdk")

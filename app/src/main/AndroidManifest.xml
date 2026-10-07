@@ -14,14 +14,16 @@
         android:icon="@drawable/formflow_app_icon"
         android:label="@string/app_name"
         android:roundIcon="@drawable/formflow_app_icon"
+        android:resizeableActivity="true"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
         <activity
-            android:name=".MainActivity"
+            android:name="ai.formflow.fitness.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.MyApplication"
-            android:screenOrientation="portrait"
+            android:supportsPictureInPicture="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

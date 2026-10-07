@@ -37,6 +37,7 @@ fun CameraPreview(
         PoseAnalyzer(
             mirrorHorizontally = lensFacing == CameraSelector.LENS_FACING_FRONT,
             onPoseFrame = onPoseFrame,
+            onAnalyzerError = onError,
         )
     }
 

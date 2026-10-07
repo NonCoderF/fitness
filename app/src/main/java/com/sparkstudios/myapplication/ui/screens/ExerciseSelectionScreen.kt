@@ -306,7 +306,7 @@ private fun RecordRepeatHeroCard(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Teach FormFlow any movement\nand practice it again.",
+                text = "Teach FormFit any movement\nand practice it again.",
                 color = SelectionDesign.SecondaryText,
                 fontSize = 14.sp,
                 lineHeight = 18.sp,
@@ -482,5 +482,4 @@ private fun PoseSkeletonArt(
         }
     }
 }
-
 

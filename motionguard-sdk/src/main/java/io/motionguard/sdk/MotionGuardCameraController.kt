@@ -48,9 +48,13 @@ public class MotionGuardCameraController internal constructor(
             runCatching {
                 val cameraProvider = cameraProviderFuture.get()
                 provider = cameraProvider
-                val poseAnalyzer = PoseAnalyzer(lens == MotionGuardLens.FRONT) { frame ->
-                    frame?.let { onResult(motionGuard.process(it)) }
-                }
+                val poseAnalyzer = PoseAnalyzer(
+                    mirrorHorizontally = lens == MotionGuardLens.FRONT,
+                    onPoseFrame = { frame ->
+                        frame?.let { onResult(motionGuard.process(it)) }
+                    },
+                    onAnalyzerError = onError,
+                )
                 analyzer = poseAnalyzer
                 executor = Executors.newSingleThreadExecutor()
                 val imageAnalysis = ImageAnalysis.Builder()

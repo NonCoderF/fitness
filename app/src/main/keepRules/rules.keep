@@ -17,3 +17,14 @@
 # MotionGuard exposes the pose and exercise pipeline through runtime-created
 # implementations and TensorFlow Lite model assets.
 -keep class io.motionguard.** { *; }
+
+# ML Kit Pose Detection 18.0.0-beta5 initializes internal model/graph classes
+# reflectively. Keep those classes intact in the minified release build.
+-keep class com.google.mlkit.** { *; }
+-keep class com.google.android.gms.internal.mlkit_** { *; }
+
+# WorkManager 2.7 creates its Room database through AndroidX Startup and
+# reflection. Keep the startup/database graph intact in the minified release.
+-keep class androidx.work.** { *; }
+-keep class androidx.room.** { *; }
+-keep class androidx.sqlite.** { *; }

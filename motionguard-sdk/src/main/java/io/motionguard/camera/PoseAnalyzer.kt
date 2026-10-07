@@ -6,6 +6,7 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.PoseDetection
+import com.google.mlkit.vision.pose.PoseDetector
 import com.google.mlkit.vision.pose.defaults.PoseDetectorOptions
 import io.motionguard.core.PoseFrame
 import io.motionguard.mlkit.MlKitPoseAdapter
@@ -14,18 +15,28 @@ import java.util.concurrent.atomic.AtomicBoolean
 class PoseAnalyzer(
     mirrorHorizontally: Boolean,
     private val onPoseFrame: (PoseFrame?) -> Unit,
+    private val onAnalyzerError: (Throwable) -> Unit = {},
 ) : ImageAnalysis.Analyzer {
     private val adapter = MlKitPoseAdapter(mirrorHorizontally)
     private val isProcessing = AtomicBoolean(false)
     private val isClosed = AtomicBoolean(false)
-    private val detector = PoseDetection.getClient(
-        PoseDetectorOptions.Builder()
-            .setDetectorMode(PoseDetectorOptions.STREAM_MODE)
-            .build(),
-    )
+    // ML Kit pose detection is still beta and can fail during construction on
+    // some devices. Keep that failure out of the Compose/main-thread crash path.
+    private val detector: PoseDetector? = runCatching {
+        PoseDetection.getClient(
+            PoseDetectorOptions.Builder()
+                .setDetectorMode(PoseDetectorOptions.STREAM_MODE)
+                .build(),
+        )
+    }.onFailure(onAnalyzerError).getOrNull()
 
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(imageProxy: ImageProxy) {
+        val activeDetector = detector
+        if (activeDetector == null) {
+            imageProxy.close()
+            return
+        }
         val mediaImage = imageProxy.image
         if (isClosed.get() || mediaImage == null || !isProcessing.compareAndSet(false, true)) {
             imageProxy.close()
@@ -38,7 +49,7 @@ class PoseAnalyzer(
         val rotatedWidth = if (rotationDegrees == 90 || rotationDegrees == 270) imageProxy.height else imageProxy.width
         val rotatedHeight = if (rotationDegrees == 90 || rotationDegrees == 270) imageProxy.width else imageProxy.height
 
-        detector.process(inputImage)
+        activeDetector.process(inputImage)
             .addOnSuccessListener { pose ->
                 if (isClosed.get()) return@addOnSuccessListener
                 val frame = adapter.toPoseFrame(
@@ -70,7 +81,7 @@ class PoseAnalyzer(
 
     fun close() {
         if (isClosed.compareAndSet(false, true)) {
-            detector.close()
+            detector?.close()
         }
     }
 }
