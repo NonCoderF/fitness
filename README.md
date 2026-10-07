@@ -16,9 +16,6 @@ FormFit is an on-device movement coach that uses camera-based pose dynamics to e
 <img src="docs/assets/formfit-overview.png" alt="FormFit overview" width="49%" />
 <img src="docs/assets/formfit-workout.png" alt="FormFit workout experience" width="49%" />
 <br />
-<img src="docs/assets/formfit-coach.png" alt="FormFit coaching screen" width="32%" />
-<img src="docs/assets/formfit-progress.png" alt="FormFit progress screen" width="32%" />
-<img src="docs/assets/formfit-screen-1.jpg" alt="FormFit mobile screen" width="32%" />
 </div>
 
 ## Features
